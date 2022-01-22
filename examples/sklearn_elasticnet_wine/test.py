@@ -1,19 +1,9 @@
 # Databricks notebook source
+from pyspark.sql import SparkSession
+from pyspark.dbutils import DBUtils
+
 if __name__ == '__main__':
-    print("Start if __name__ == '__main__'")
-    print('call func()')
-    #print(sc)
-    print(spark)
-    #sc
-    spark
+    spark = SparkSession.builder.getOrCreate()
 
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-from pyspark import SparkContext
-from pyspark.sql import SQLContext
-
-spark
+    dbutils = DBUtils(spark)
+    print(dbutils.fs.ls("dbfs:/"))
