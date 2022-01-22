@@ -22,6 +22,7 @@ from mlflow.protos.databricks_pb2 import (
 from mlflow.tracking.client import MlflowClient
 from mlflow.tracking import artifact_utils, _get_store
 from mlflow.tracking.context import registry as context_registry
+from mlflow.tracking._default_experiment import registry as default_experiment_registry
 from mlflow.store.tracking import SEARCH_MAX_RESULTS_DEFAULT
 from mlflow.utils import env
 from mlflow.utils.autologging_utils import (
@@ -1335,32 +1336,11 @@ def _get_experiment_id_from_env():
 
 
 def _get_experiment_id():
-    # TODO: Replace with None for 1.0, leaving for 0.9.1 release backcompat with existing servers
-    deprecated_default_exp_id = "0"
-
     return (
         _active_experiment_id
         or _get_experiment_id_from_env()
-        or (is_in_databricks_notebook() and get_notebook_id())
-        or (is_in_databricks_job() and get_job_type_info() == "NORMAL" and _create_job_experiment())
-    ) or deprecated_default_exp_id
-
-
-def _create_job_experiment() -> str:
-    job_id = get_job_id()
-    tags = {}
-    tags[MLFLOW_DATABRICKS_JOB_TYPE_INFO] = get_job_type_info()
-    tags[MLFLOW_EXPERIMENT_SOURCE_TYPE] = SourceType.to_string(SourceType.JOB)
-    tags[MLFLOW_EXPERIMENT_SOURCE_ID] = job_id
-
-    experiment_id = create_experiment(get_experiment_name_from_job_id(job_id), None, tags)
-    _logger.debug(
-        "Job experiment with experiment_id '%s' created",
-        experiment_id,
+        or default_experiment_registry.get_experiment_id()
     )
-
-    return experiment_id
-
 
 @autologging_integration("mlflow")
 def autolog(
